@@ -88,6 +88,16 @@ def login():
         return render_template('login.html', error="Wrong password")
     return render_template('login.html')
 
+@app.route("/api/contacts", methods=["POST"])
+@login_required
+def create_contact_proxy():
+    r = requests.post(
+        f"{API_BASE}/contacts",
+        json=request.json,
+        timeout=10
+    )
+    return (r.text, r.status_code, r.headers.items())
+
 @app.route('/logout')
 def logout():
     session.pop('logged_in', None)
