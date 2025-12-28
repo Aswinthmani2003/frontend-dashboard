@@ -1,182 +1,267 @@
 <!DOCTYPE html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>AMI ClientConnect - WhatsApp</title>
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}?v=1">
-    <link rel="stylesheet" href="{{ url_for('static', filename='whatsapp.css') }}">
-</head>
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='whatsapp.css') }}"
+    />
+  </head>
 
-<body class="{{ theme }}-theme">
+  <body class="{{ theme }}-theme">
     <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <div class="profile-pic">
-                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo"
-                        onerror="this.style.display='none'; this.parentElement.textContent='AMI'">
-                </div>
-                <div class="header-title">
-                    <h2>AMI ClientConnect</h2>
-                </div>
-                <div class="header-icons">
-                    <!-- Theme Toggle Button -->
-                    <button class="theme-toggle-btn" id="themeToggle" title="Toggle Theme">
-                        <svg class="icon sun-icon" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z" />
-                        </svg>
-                        <svg class="icon moon-icon" viewBox="0 0 24 24" fill="currentColor" style="display: none;">
-                            <path
-                                d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z" />
-                        </svg>
-                    </button>
-                    <!-- Logout -->
-                    <a href="/logout" style="color: inherit; text-decoration: none;">
-                        <svg class="icon" viewBox="0 0 24 24" fill="currentColor" title="Logout">
-                            <path
-                                d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9z" />
-                        </svg>
-                    </a>
-                </div>
-            </div>
-
-            <!-- Filters Toggle -->
-            <div class="filters-toggle">
-                <button id="filterToggleBtn" class="filter-btn">▶ Filters</button>
-            </div>
-
-            <!-- Filters Panel -->
-            <div id="filtersPanel" class="filters-panel" style="display: none;">
-                <label class="filter-label">
-                    <input type="checkbox" id="filterByDate"> 📅 Enable date filter
-                </label>
-                <input type="date" id="filterDate" class="filter-input" disabled>
-
-                <label class="filter-label">
-                    <input type="checkbox" id="filterOnlyFU"> 🔴 Show only follow-up clients
-                </label>
-
-                <label class="filter-label">
-                    <input type="checkbox" id="filterUnread"> 🟢 Show only unread messages
-                </label>
-
-                <div class="filter-buttons">
-                    <button id="applyFilters" class="apply-filters-btn">Apply Filters</button>
-                    <button id="removeFilters" class="remove-filters-btn">Remove Filters</button>
-                </div>
-            </div>
-            <div class="search-bar">
-                <input type="text" class="search-input" placeholder="Search contacts..." id="searchContacts">
-            </div>
-
-            <div class="chat-list" id="contactsList">
-                <!-- Contacts will be loaded here -->
-            </div>
+      <!-- Sidebar -->
+      <div class="sidebar">
+        <div class="sidebar-header">
+          <div class="profile-pic">
+            <img
+              src="{{ url_for('static', filename='logo.png') }}"
+              alt="Logo"
+              onerror="this.style.display='none'; this.parentElement.textContent='AMI'"
+            />
+          </div>
+          <div class="header-title">
+            <h2>AMI ClientConnect</h2>
+          </div>
+          <div class="header-icons">
+            <!-- Theme Toggle Button -->
+            <button
+              class="theme-toggle-btn"
+              id="themeToggle"
+              title="Toggle Theme"
+            >
+              <svg
+                class="icon sun-icon"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"
+                />
+              </svg>
+              <svg
+                class="icon moon-icon"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                style="display: none"
+              >
+                <path
+                  d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"
+                />
+              </svg>
+            </button>
+            <!-- Logout -->
+            <a href="/logout" style="color: inherit; text-decoration: none">
+              <svg
+                class="icon"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                title="Logout"
+              >
+                <path
+                  d="M16 17v-3H9v-4h7V7l5 5-5 5M14 2a2 2 0 0 1 2 2v2h-2V4H5v16h9v-2h2v2a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9z"
+                />
+              </svg>
+            </a>
+          </div>
         </div>
 
-        <!-- Main Chat -->
-        <div class="main-chat">
-            <div class="chat-header-main" id="chatHeader" style="display: none;">
-                <div class="chat-header-info">
-                    <div class="chat-header-avatar" id="chatAvatar"></div>
-                    <div class="chat-header-text">
-                        <h3 id="chatName"></h3>
-                        <p id="chatPhone"></p>
-                    </div>
-                </div>
-                <div class="header-actions">
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="automationToggle">
-                        <span>🤖 Chatbot</span>
-                    </label>
-                    <label class="toggle-switch">
-                        <input type="checkbox" id="followUpToggle">
-                        <span>🔴 Follow-up</span>
-                    </label>
-                    <button class="delete-all-btn" id="deleteAllBtn">🗑️</button>
-                </div>
-            </div>
-
-            <div class="chat-messages" id="chatMessages">
-                <div class="empty-chat">
-                    <div class="empty-icon">💬</div>
-                    <h2>AMI ClientConnect</h2>
-                    <p>Select a contact to view conversation</p>
-                </div>
-            </div>
-
-            <!-- Pagination -->
-            <div class="pagination-bar" id="paginationBar" style="display: none;">
-                <button class="pagination-btn" id="prevBtn">⬅️ Previous</button>
-                <span id="paginationInfo">Showing 1-20</span>
-                <button class="pagination-btn" id="nextBtn">Next ➡️</button>
-            </div>
-
-            <div class="chat-input-area" id="inputArea" style="display: none;">
-                <div class="input-icons">
-                    <!-- Emoji Picker -->
-                    <div class="emoji-picker-wrapper">
-                        <svg class="icon emoji-btn" viewBox="0 0 24 24" fill="currentColor" id="emojiBtn"
-                            title="Insert emoji">
-                            <path
-                                d="M9.153 11.603c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962zm-3.204 1.362c-.026-.307-.131 5.218 6.063 5.551 6.066-.25 6.066-5.551 6.066-5.551-6.078 1.416-12.129 0-12.129 0zm11.363 1.108s-.669 1.959-5.051 1.959c-3.505 0-5.388-1.164-5.607-1.959 0 0 5.912 1.055 10.658 0zM11.804 1.011C5.609 1.011.978 6.033.978 12.228s4.826 10.761 11.021 10.761S23.02 18.423 23.02 12.228c.001-6.195-5.021-11.217-11.216-11.217zM12 21.354c-5.273 0-9.381-3.886-9.381-9.159s3.942-9.548 9.215-9.548 9.548 4.275 9.548 9.548c-.001 5.272-4.109 9.159-9.382 9.159zm3.108-9.751c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962z" />
-                        </svg>
-                        <div class="emoji-picker" id="emojiPicker" style="display: none;">
-                            <div class="emoji-grid">
-                                👍 👎 👌 ✌️ 🤝 🙏 👏 💪 ✊ 🤞
-                                😊 😀 😃 😄 😁 🙂 😉 😎 🤗 🥳
-                                👋 ✋ 🖐 ☝️ 👆 👉 👇 👈 🙌 🤲
-                                💰 💵 💴 💶 💷 💸 💳 💎 🏦 🏧
-                                📈 📉 📊 💹 💱 💲 🔔 ⏰ ⏳ ⌛
-                                ✅ ❌ ⚠️ ℹ️ ❗ ❓ ⁉️ 💯 🔥 ⭐
-                                📝 📋 📄 📃 📑 📊 📉 📈 🗂️ 📁
-                                📞 ☎️ 📱 💬 💭 🗨️ 📧 📨 📩 ✉️
-                                🎯 🎖️ 🏆 🥇 🥈 🥉 🎁 🎉 🎊 🔑
-                                ⏱️ ⏲️ 🕐 🕑 🕒 🕓 🕔 🕕 🕖 🕗
-                            </div>
-                        </div>
-                    </div>
-                    <!-- File Upload -->
-                    <label for="fileInput" class="file-upload-label" title="Attach file">
-                        <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
-                            <path
-                                d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 0 0 3.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.098-.097-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 0 1-2.829 1.171 3.975 3.975 0 0 1-2.83-1.173 3.973 3.973 0 0 1-1.172-2.828c0-1.071.415-2.076 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 0 0-.834.018l-7.205 7.207a5.577 5.577 0 0 0-1.645 3.971z" />
-                        </svg>
-                    </label>
-                    <input type="file" id="fileInput" style="display: none;" accept="image/*,application/pdf,.doc,.docx"
-                        multiple>
-                </div>
-                <input type="text" class="chat-input" placeholder="Type a message" id="messageInput">
-                <button class="send-button" id="sendBtn">
-                    <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
-                        <path
-                            d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z" />
-                    </svg>
-                </button>
-            </div>
+        <!-- Filters Toggle -->
+        <div class="filters-toggle">
+          <button id="filterToggleBtn" class="filter-btn">
+            <span class="btn-icon">
+              <!-- Filter icon -->
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="currentColor"
+              >
+                <path d="M3 4h18v2H3V4zm4 7h10v2H7v-2zm3 7h4v2h-4v-2z" />
+              </svg>
+            </span>
+            <span class="btn-text">Filters</span>
+          </button>
         </div>
+
+        <!-- Filters Panel -->
+        <div id="filtersPanel" class="filters-panel" style="display: none">
+          <label class="filter-label">
+            <input type="checkbox" id="filterByDate" /> 📅 Enable date filter
+          </label>
+          <input type="date" id="filterDate" class="filter-input" disabled />
+
+          <label class="filter-label">
+            <input type="checkbox" id="filterOnlyFU" /> 🔴 Show only follow-up
+            clients
+          </label>
+
+          <label class="filter-label">
+            <input type="checkbox" id="filterUnread" /> 🟢 Show only unread
+            messages
+          </label>
+
+          <div class="filter-buttons">
+            <button id="applyFilters" class="apply-filters-btn">
+              Apply Filters
+            </button>
+            <button id="removeFilters" class="remove-filters-btn">
+              Remove Filters
+            </button>
+          </div>
+        </div>
+        <div class="add-contact-bar">
+          <button class="filter-btn" id="addContactBtn">
+            <span class="btn-icon">
+              <!-- Plus/User icon -->
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="currentColor"
+              >
+                <path
+                  d="M15 14c2.7 0 5 1.3 5 3v1H4v-1c0-1.7 2.3-3 5-3h6zm-3-2a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm1 4v-2h-2v2H9v2h2v2h2v-2h2v-2h-2z"
+                />
+              </svg>
+            </span>
+            <span class="btn-text">New Contact</span>
+          </button>
+        </div>
+
+        <div class="search-bar">
+          <input
+            type="text"
+            class="search-input"
+            placeholder="Search contacts..."
+            id="searchContacts"
+          />
+        </div>
+
+        <div class="chat-list" id="contactsList">
+          <!-- Contacts will be loaded here -->
+        </div>
+      </div>
+
+      <!-- Main Chat -->
+      <div class="main-chat">
+        <div class="chat-header-main" id="chatHeader" style="display: none">
+          <div class="chat-header-info">
+            <div class="chat-header-avatar" id="chatAvatar"></div>
+            <div class="chat-header-text">
+              <h3 id="chatName"></h3>
+              <p id="chatPhone"></p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <label class="toggle-switch">
+              <input type="checkbox" id="automationToggle" />
+              <span>🤖 Chatbot</span>
+            </label>
+            <label class="toggle-switch">
+              <input type="checkbox" id="followUpToggle" />
+              <span>🔴 Follow-up</span>
+            </label>
+            <button class="delete-all-btn" id="deleteAllBtn">🗑️</button>
+          </div>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+          <div class="empty-chat">
+            <div class="empty-icon">💬</div>
+            <h2>AMI ClientConnect</h2>
+            <p>Select a contact to view conversation</p>
+          </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination-bar" id="paginationBar" style="display: none">
+          <button class="pagination-btn" id="prevBtn">⬅️ Previous</button>
+          <span id="paginationInfo">Showing 1-20</span>
+          <button class="pagination-btn" id="nextBtn">Next ➡️</button>
+        </div>
+
+        <div class="chat-input-area" id="inputArea" style="display: none">
+          <div class="input-icons">
+            <!-- Emoji Picker -->
+            <div class="emoji-picker-wrapper">
+              <svg
+                class="icon emoji-btn"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                id="emojiBtn"
+                title="Insert emoji"
+              >
+                <path
+                  d="M9.153 11.603c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962zm-3.204 1.362c-.026-.307-.131 5.218 6.063 5.551 6.066-.25 6.066-5.551 6.066-5.551-6.078 1.416-12.129 0-12.129 0zm11.363 1.108s-.669 1.959-5.051 1.959c-3.505 0-5.388-1.164-5.607-1.959 0 0 5.912 1.055 10.658 0zM11.804 1.011C5.609 1.011.978 6.033.978 12.228s4.826 10.761 11.021 10.761S23.02 18.423 23.02 12.228c.001-6.195-5.021-11.217-11.216-11.217zM12 21.354c-5.273 0-9.381-3.886-9.381-9.159s3.942-9.548 9.215-9.548 9.548 4.275 9.548 9.548c-.001 5.272-4.109 9.159-9.382 9.159zm3.108-9.751c.795 0 1.439-.879 1.439-1.962s-.644-1.962-1.439-1.962-1.439.879-1.439 1.962.644 1.962 1.439 1.962z"
+                />
+              </svg>
+              <div class="emoji-picker" id="emojiPicker" style="display: none">
+                <div class="emoji-grid">
+                  👍 👎 👌 ✌️ 🤝 🙏 👏 💪 ✊ 🤞 😊 😀 😃 😄 😁 🙂 😉 😎 🤗 🥳 👋
+                  ✋ 🖐 ☝️ 👆 👉 👇 👈 🙌 🤲 💰 💵 💴 💶 💷 💸 💳 💎 🏦 🏧 📈 📉
+                  📊 💹 💱 💲 🔔 ⏰ ⏳ ⌛ ✅ ❌ ⚠️ ℹ️ ❗ ❓ ⁉️ 💯 🔥 ⭐ 📝 📋 📄
+                  📑 📊 📉 📈 🗂️ 📁 📞 ☎️ 📱 💬 💭 🗨️ 📧 📨 📩 ✉️ 🎯 🎖️ 🏆 🥇 🥈
+                  🥉 🎁 🎉 🎊 🔑 ⏱️ ⏲️ 🕐 🕑 🕒 🕓 🕔 🕕 🕖 🕗
+                </div>
+              </div>
+            </div>
+            <!-- File Upload -->
+            <label
+              for="fileInput"
+              class="file-upload-label"
+              title="Attach file"
+            >
+              <svg class="icon" viewBox="0 0 24 24" fill="currentColor">
+                <path
+                  d="M1.816 15.556v.002c0 1.502.584 2.912 1.646 3.972s2.472 1.647 3.974 1.647a5.58 5.58 0 0 0 3.972-1.645l9.547-9.548c.769-.768 1.147-1.767 1.058-2.817-.079-.968-.548-1.927-1.319-2.698-1.594-1.592-4.068-1.711-5.517-.262l-7.916 7.915c-.881.881-.792 2.25.214 3.261.959.958 2.423 1.053 3.263.215l5.511-5.512c.28-.28.267-.722.053-.936l-.244-.244c-.191-.191-.567-.349-.957.04l-5.506 5.506c-.18.18-.635.127-.976-.214-.098-.097-.576-.613-.213-.973l7.915-7.917c.818-.817 2.267-.699 3.23.262.5.501.802 1.1.849 1.685.051.573-.156 1.111-.589 1.543l-9.547 9.549a3.97 3.97 0 0 1-2.829 1.171 3.975 3.975 0 0 1-2.83-1.173 3.973 3.973 0 0 1-1.172-2.828c0-1.071.415-2.076 1.172-2.83l7.209-7.211c.157-.157.264-.579.028-.814L11.5 4.36a.572.572 0 0 0-.834.018l-7.205 7.207a5.577 5.577 0 0 0-1.645 3.971z"
+                />
+              </svg>
+            </label>
+            <input
+              type="file"
+              id="fileInput"
+              style="display: none"
+              accept="image/*,application/pdf,.doc,.docx"
+              multiple
+            />
+          </div>
+          <input
+            type="text"
+            class="chat-input"
+            placeholder="Type a message"
+            id="messageInput"
+          />
+          <button class="send-button" id="sendBtn">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="white">
+              <path
+                d="M1.101 21.757L23.8 12.028 1.101 2.3l.011 7.912 13.623 1.816-13.623 1.817-.011 7.912z"
+              />
+            </svg>
+          </button>
+        </div>
+      </div>
     </div>
 
     <script src="{{ url_for('static', filename='whatsapp.js') }}"></script>
     <script>
-        // Set correct icon on page load
-        document.addEventListener('DOMContentLoaded', function () {
-            const isDark = document.body.classList.contains('dark-theme');
-            const sunIcon = document.querySelector('.sun-icon');
-            const moonIcon = document.querySelector('.moon-icon');
+      // Set correct icon on page load
+      document.addEventListener("DOMContentLoaded", function () {
+        const isDark = document.body.classList.contains("dark-theme");
+        const sunIcon = document.querySelector(".sun-icon");
+        const moonIcon = document.querySelector(".moon-icon");
 
-            if (isDark) {
-                sunIcon.style.display = 'block';
-                moonIcon.style.display = 'none';
-            } else {
-                sunIcon.style.display = 'none';
-                moonIcon.style.display = 'block';
-            }
-        });
+        if (isDark) {
+          sunIcon.style.display = "block";
+          moonIcon.style.display = "none";
+        } else {
+          sunIcon.style.display = "none";
+          moonIcon.style.display = "block";
+        }
+      });
     </script>
-</body>
-
+  </body>
 </html>
