@@ -459,8 +459,22 @@ function selectContact(phone) {
         
         document.getElementById('chatAvatar').className = `chat-header-avatar avatar-color-${colorIndex}`;
         document.getElementById('chatAvatar').textContent = initials;
-        document.getElementById('chatName').textContent = contact.client_name || 'Unknown';
-        document.getElementById('chatPhone').textContent = phone;
+        const chatNameEl = document.getElementById('chatName');
+        chatNameEl.innerHTML = `
+            <span id="contactNameText">${escapeHtml(contact.client_name || 'Unknown')}</span>
+            <span 
+                id="editContactName"
+                title="Edit contact name"
+                style="
+                    margin-left: 8px;
+                    cursor: pointer;
+                    font-size: 14px;
+                    opacity: 0.7;
+                "
+            >✏️</span>
+`;
+
+        attachEditNameHandler(phone, contact.client_name || 'Unknown');
         
         document.getElementById('followUpToggle').checked = contact.follow_up_open || false;
         
@@ -468,6 +482,37 @@ function selectContact(phone) {
         loadAutomationStatus(phone);
     }
 }
+
+function attachEditNameHandler(phone, currentName) {
+    const editIcon = document.getElementById('editContactName');
+    if (!editIcon) return;
+
+    editIcon.onclick = async (e) => {
+        e.stopPropagation();
+
+        const newName = prompt(
+            'Enter display name for this contact:',
+            currentName || ''
+        );
+
+        if (!newName || newName.trim() === currentName) return;
+
+        try {
+            await fetch(`/api/contacts/${phone}?display_name=${encodeURIComponent(newName.trim())}`, {
+                method: 'PATCH'
+            });
+
+            // Refresh UI
+            await fetchContacts();
+            await fetchConversation(phone);
+
+        } catch (err) {
+            console.error('Failed to update contact name', err);
+            alert('Failed to update contact name');
+        }
+    };
+}
+
 
 function getStatusIcon(status) {
     if (!status) return '';
