@@ -287,6 +287,21 @@ def send_message():
         traceback.print_exc()
         print(f"{'='*60}\n")
         return jsonify({"error": str(e)}), 500
+    
+@app.route("/api/contacts/<phone>", methods=["PATCH"])
+def update_contact_proxy(phone):
+    display_name = request.args.get("display_name")
+
+    if not display_name:
+        return {"error": "display_name required"}, 400
+
+    r = requests.patch(
+        f"{API_BASE}/contacts/{phone}",
+        params={"display_name": display_name}
+    )
+
+    return (r.text, r.status_code, r.headers.items())
+
 
 @app.route('/api/send_file', methods=['POST'])
 @login_required
