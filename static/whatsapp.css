@@ -151,10 +151,6 @@ body {
     color: #111b21;
 }
 
-.light-theme .chat-header-text p {
-    color: #667781;
-}
-
 .light-theme .chat-messages {
     background-color: #efeae2;
 }
@@ -317,10 +313,6 @@ body {
     transition: color 0.2s;
 }
 
-.icon:hover {
-    color: #fff;
-}
-
 /* Filters */
 .filters-toggle {
     padding: 8px 15px;
@@ -356,11 +348,6 @@ body {
     margin-bottom: 10px;
     font-size: 14px;
     border: none;
-}
-
-.time-filters {
-    display: flex;
-    gap: 10px;
 }
 
 /* Search Bar */
@@ -488,12 +475,6 @@ body {
     margin: 0;
 }
 
-.chat-header-text p {
-    color: #667781;
-    font-size: 13px;
-    margin: 2px 0 0 0;
-}
-
 .header-actions {
     display: flex;
     gap: 15px;
@@ -602,13 +583,6 @@ body {
     font-size: 11px;
     color: #667781;
     margin-top: 5px;
-}
-
-.message-footer {
-    display: flex;
-    justify-content: flex-end;
-    align-items: center;
-    gap: 4px;
 }
 
 .message-status {
@@ -885,4 +859,24 @@ body {
 
 .message-status.status-read {
     color: #53bdeb; /* WhatsApp blue */
+}
+.add-contact-bar {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.filter-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-icon {
+    display: flex;
+    align-items: center;
+    opacity: 0.9;
+}
+
+.btn-text {
+    font-weight: 600;
 }
