@@ -328,6 +328,17 @@ body {
     cursor: pointer;
     font-size: 14px;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.light-theme .filter-btn {
+    background: #25D366;
+}
+
+.light-theme .filter-btn:hover {
+    background: #128C7E;
 }
 
 .filters-panel {
@@ -724,6 +735,14 @@ body {
     background-color: #06cf9c;
 }
 
+.light-theme .send-button {
+    background-color: #25D366;
+}
+
+.light-theme .send-button:hover {
+    background-color: #128C7E;
+}
+
 /* Pagination */
 .pagination-bar {
     padding: 10px 15px;
@@ -745,6 +764,14 @@ body {
 .pagination-btn:disabled {
     background: #8696a0;
     cursor: not-allowed;
+}
+
+.light-theme .pagination-btn {
+    background: #25D366;
+}
+
+.light-theme .pagination-btn:hover:not(:disabled) {
+    background: #128C7E;
 }
 
 #paginationInfo {
@@ -806,6 +833,14 @@ body {
     background: #06cf9c;
 }
 
+.light-theme .apply-filters-btn {
+    background: #25D366;
+}
+
+.light-theme .apply-filters-btn:hover {
+    background: #128C7E;
+}
+
 .remove-filters-btn {
     flex: 1;
     padding: 8px;
@@ -863,12 +898,6 @@ body {
 .add-contact-bar {
     padding: 8px 12px;
     border-bottom: 1px solid var(--border-color);
-}
-
-.filter-btn {
-    display: flex;
-    align-items: center;
-    gap: 8px;
 }
 
 .btn-icon {
