@@ -492,19 +492,21 @@ function selectContact(phone) {
     document.getElementById("chatAvatar").textContent = initials;
     const chatNameEl = document.getElementById("chatName");
     chatNameEl.innerHTML = `
-            <span id="contactNameText">${escapeHtml(
-              contact.client_name || "Unknown"
-            )}</span>
+    <div style="display: flex; flex-direction: column; line-height: 1.2;">
+        <div style="display: flex; align-items: center;">
+            <span id="contactNameText" style="font-weight: 600;">
+                ${escapeHtml(contact.client_name || "Unknown")}
+            </span>
             <span 
                 id="editContactName"
                 title="Edit contact name"
-                style="
-                    margin-left: 8px;
-                    cursor: pointer;
-                    font-size: 14px;
-                    opacity: 0.7;
-                "
+                style="margin-left: 8px; cursor: pointer; font-size: 14px; opacity: 0.7;"
             >✏️</span>
+        </div>
+        <div style="font-size: 12px; opacity: 0.6;">
+            ${escapeHtml(contact.phone)}
+        </div>
+    </div>
 `;
 
     attachEditNameHandler(phone, contact.client_name || "Unknown");
