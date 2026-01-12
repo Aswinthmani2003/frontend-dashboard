@@ -9,6 +9,7 @@ const state = {
   lastMessageCount: {},
   lastContactUpdate: {},
   newMessageAlerts: {},
+  sessionActive: true,
   filters: {
     byDate: false,
     date: null,
@@ -200,47 +201,50 @@ async function checkAndSetNewMessageAlert(phone) {
 
 async function fetchConversation(phone) {
   try {
+    // 1️⃣ Fetch conversation (single source of truth)
     const params = new URLSearchParams({
       limit: state.limit,
       offset: state.offset,
     });
+
     const response = await fetch(`/api/conversation/${phone}?${params}`);
-    const newMessages = await response.json();
+    const data = await response.json();
 
-    const currentCount = newMessages.length;
-    const previousCount = state.lastMessageCount[phone] || 0;
-
-    if (currentCount > previousCount && previousCount > 0) {
-      console.log(`🔔 New message for ${phone}`);
+    // 🔒 Defensive validation
+    if (!data || !Array.isArray(data.messages)) {
+      console.error("❌ Invalid conversation payload:", data);
+      state.messages = [];
+      renderMessages();
+      updatePaginationInfo();
+      return;
     }
 
-    state.lastMessageCount[phone] = currentCount;
-    state.messages = newMessages;
+    // 2️⃣ Update messages + session state
+    state.messages = data.messages;
+    state.sessionActive = data.session_active === true;
 
-    // Update pagination info
     updatePaginationInfo();
-
     renderMessages();
+    updateInputForSession();
+
+    // 3️⃣ Automation + alerts
     await loadAutomationStatus(phone);
 
     if (state.newMessageAlerts[phone]) {
       delete state.newMessageAlerts[phone];
-
-      // Clear from backend
       await fetch(`/api/alerts/${phone}`, { method: "DELETE" });
-
-      console.log(`✅ Cleared alert for ${phone} (conversation opened)`);
       renderContacts();
     }
   } catch (error) {
-    console.error("Error fetching conversation:", error);
+    console.error("❌ Error fetching conversation:", error);
   }
 }
 
 // Update pagination information and button states
 function updatePaginationInfo() {
   const start = state.offset + 1;
-  const end = state.offset + state.messages.length;
+  const count = Array.isArray(state.messages) ? state.messages.length : 0;
+  const end = state.offset + count;
 
   document.getElementById(
     "paginationInfo"
@@ -299,7 +303,7 @@ function toggleInputArea(automationEnabled) {
   } else {
     // Chatbot is OFF - Enable input
     messageInput.disabled = false;
-    messageInput.placeholder = "Type a message";
+    updateInputForSession();
     sendBtn.disabled = false;
     sendBtn.style.opacity = "1";
     sendBtn.style.cursor = "pointer";
@@ -316,11 +320,14 @@ async function loadAutomationStatus(phone) {
   try {
     const response = await fetch(`/api/automation/${phone}`);
     const data = await response.json();
-    document.getElementById("automationToggle").checked =
-      data.automation_enabled;
 
-    // Enable/disable input area based on automation status
-    toggleInputArea(data.automation_enabled);
+    const enabled = Boolean(data.automation_enabled);
+
+    const toggle = document.getElementById("automationToggle");
+    toggle.checked = enabled;
+
+    // 🔥 CRITICAL: apply side-effects on load
+    toggleInputArea(enabled);
   } catch (error) {
     console.error("Error loading automation:", error);
   }
@@ -328,31 +335,66 @@ async function loadAutomationStatus(phone) {
 
 async function setAutomationStatus(phone, enabled) {
   try {
-    await fetch(`/api/automation/${phone}`, {
+    const response = await fetch(`/api/automation/${phone}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ automation_enabled: enabled }),
     });
 
-    // Toggle input area immediately
+    if (!response.ok) {
+      throw new Error("Failed to update automation status");
+    }
+
+    // Update UI immediately
     toggleInputArea(enabled);
 
+    // Clear alerts if chatbot is turned ON
     if (enabled && state.newMessageAlerts[phone]) {
       delete state.newMessageAlerts[phone];
-
-      // Clear from backend
       await fetch(`/api/alerts/${phone}`, { method: "DELETE" });
-
-      console.log(`✅ Cleared alert for ${phone} (Chatbot turned ON)`);
       renderContacts();
     }
+
+    console.log(
+      `🤖 Automation ${enabled ? "ENABLED" : "DISABLED"} for ${phone}`
+    );
   } catch (error) {
     console.error("Error setting automation:", error);
+    alert("Failed to update chatbot status");
   }
 }
 
 async function sendMessage(phone, message) {
   try {
+    // TEMPLATE FLOW (session expired)
+    if (!state.sessionActive) {
+      const contact = state.contacts.find((c) => c.phone === phone);
+
+      const payload = {
+        phone,
+        client_name: contact?.client_name || "Client",
+        variables: message.trim(),
+      };
+
+      const response = await fetch(
+        "https://hook.eu2.make.com/hh4z6i0kmkbnyxqwelg7uoljf3l34e4c",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+
+      if (!response.ok) {
+        alert("Template send failed");
+        return false;
+      }
+
+      document.getElementById("messageInput").value = "";
+      return true;
+    }
+
+    // NORMAL SESSION FLOW
     const response = await fetch("/api/send_message", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -361,12 +403,12 @@ async function sendMessage(phone, message) {
 
     if (response.ok) {
       document.getElementById("messageInput").value = "";
-      setTimeout(() => fetchConversation(phone), 500);
       return true;
     }
+
     return false;
-  } catch (error) {
-    console.error("Error sending message:", error);
+  } catch (err) {
+    console.error(err);
     return false;
   }
 }
@@ -570,6 +612,19 @@ function getStatusIcon(status) {
   }
 }
 
+function updateInputForSession() {
+  const input = document.getElementById("messageInput");
+  const sendBtn = document.getElementById("sendBtn");
+
+  if (!state.sessionActive) {
+    input.placeholder = "Type message to send as template";
+    input.classList.add("template-mode");
+  } else {
+    input.placeholder = "Type a message";
+    input.classList.remove("template-mode");
+  }
+}
+
 function renderMessages() {
   const container = document.getElementById("chatMessages");
 
@@ -639,7 +694,8 @@ function renderMessages() {
       return;
     }
 
-    const direction = msg.direction === "user" ? "received" : "sent";
+    const isOutbound = msg.direction !== "user";
+    const direction = isOutbound ? "sent" : "received";
 
     const messageDiv = document.createElement("div");
     messageDiv.className = `message ${direction}`;
@@ -665,7 +721,8 @@ function renderMessages() {
       )}</div>`;
     }
 
-    const statusIcon = direction === "sent" ? getStatusIcon(msg.status) : "";
+    const statusIcon =
+      isOutbound && msg.status ? getStatusIcon(msg.status) : "";
     const statusClass = msg.status === "read" ? "status-read" : "";
 
     messageDiv.innerHTML = `
@@ -676,7 +733,7 @@ function renderMessages() {
                    <span class="message-time">${formatTime(
                      msg.timestamp
                    )}</span>
-                   <span class="message-status ${statusClass}">${statusIcon}</span>
+                   ${statusIcon ? `<span class="message-status ${statusClass}">${statusIcon}</span>` : ""}
                </div>
             </div>
 `;
@@ -737,11 +794,40 @@ document.getElementById("addContactBtn").onclick = async () => {
           }),
         });
 
-        // 2️⃣ Try sending first message (non-blocking)
+        // 2️⃣ Trigger Make webhook to start conversation (template kick-off)
         try {
-          await sendMessage(phone.trim(), "Hello 👋");
+          await fetch(
+            "https://hook.eu2.make.com/hh4z6i0kmkbnyxqwelg7uoljf3l34e4c",
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                phone: phone.trim(),
+                client_name: display_name.trim(),
+                variables:
+                  "this automated message template is for to start a conversation with our team",
+              }),
+            }
+          );
+
+          // 3️⃣ Log template message in backend DB (MANDATORY)
+          await fetch("/api/log_template_message", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              phone: phone.trim(),
+              message:
+                "this automated message template is for to start a conversation with our team",
+              direction: "sent",
+              type: "template",
+              status: "sent",
+              handled_by: "system",
+            }),
+          });
+
+          console.log("🚀 Conversation starter webhook triggered");
         } catch (e) {
-          console.warn("Initial message failed", e);
+          console.warn("⚠️ Webhook trigger failed", e);
         }
 
         // 3️⃣ Refresh UI
@@ -990,7 +1076,6 @@ async function sendFileMessage(phone, file) {
     });
 
     if (response.ok) {
-      setTimeout(() => fetchConversation(phone), 500);
       return true;
     }
     return false;
