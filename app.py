@@ -58,6 +58,19 @@ def format_timestamp_ist(timestamp) -> str:
         dt = datetime.now(IST)
     return dt.isoformat()
 
+def is_session_active(phone: str) -> bool:
+    """
+    Ask backend if WhatsApp 24h session is active for this phone
+    """
+    try:
+        r = requests.get(f"{API_BASE}/session/{phone}", timeout=10)
+        if not r.ok:
+            return False
+        return bool(r.json().get("session_active", False))
+    except Exception as e:
+        print("⚠️ Session check failed:", e)
+        return False
+
 # Debug: Print configuration on startup
 print("=" * 50)
 print("🚀 Flask App Configuration")
@@ -179,20 +192,30 @@ def get_contacts():
 def get_conversation(phone):
     limit = request.args.get('limit', 50, type=int)
     offset = request.args.get('offset', 0, type=int)
+
     try:
+        # 1️⃣ Fetch messages from backend
         response = requests.get(
             f"{API_BASE}/conversation/{phone}",
             params={"limit": limit, "offset": offset},
             timeout=30
         )
         messages = response.json()
-        
-        # Convert all timestamps to IST
+
+        # 2️⃣ Convert timestamps to IST
         for msg in messages:
             if 'timestamp' in msg:
                 msg['timestamp'] = format_timestamp_ist(msg['timestamp'])
-        
-        return jsonify(messages)
+
+        # 3️⃣ Compute session status HERE (single source of truth)
+        session_active = is_session_active(phone)
+
+        # 4️⃣ Return combined response
+        return jsonify({
+            "messages": messages,
+            "session_active": session_active
+        })
+
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -251,31 +274,64 @@ def set_automation(phone):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+from flask import request, jsonify
+from datetime import datetime
+import requests
+import traceback
+
+@app.route("/api/session/<phone>")
+@login_required
+def check_session(phone):
+    try:
+        r = requests.get(f"{API_BASE}/session/{phone}", timeout=10)
+        if not r.ok:
+            return jsonify({"session_active": False})
+
+        return jsonify({
+            "session_active": bool(r.json().get("session_active", False))
+        })
+    except Exception as e:
+        print("⚠️ Session proxy failed:", e)
+        return jsonify({"session_active": False})
+
+
 @app.route('/api/send_message', methods=['POST'])
 @login_required
 def send_message():
+    # 1. Configuration Check
     if not MAKE_WEBHOOK_URL:
-        return jsonify({"error": "MAKE_WEBHOOK_URL not configured in .env file"}), 500
+        return jsonify({"error": "MAKE_WEBHOOK_URL not configured"}), 500
     
     try:
-        data = request.json
+        data = request.get_json()
         phone = data.get('phone')
         message = data.get('message')
+
+        # 2. Validation
+        if not phone or not message:
+            return jsonify({"error": "Phone and message are required"}), 400
         
-        print(f"\n{'='*60}")
-        print(f"📤 Dashboard user sending message")
-        print(f"{'='*60}")
-        print(f"Phone: {phone}")
-        print(f"Message: {message[:50]}..." if len(message) > 50 else f"Message: {message}")
+        # 3. Session Check
+        if not is_session_active(phone):
+            return jsonify({
+                "requires_template": True,
+                "session_active": False
+            }), 200
         
-        # Send to Make.com webhook (for WhatsApp sending)
-        print(f"\n🌐 Sending to 'Reply to Clients' webhook...")
-        print(f"Webhook URL: {MAKE_WEBHOOK_URL}")
+        print(f"\n{'='*60}\n📤 Dashboard user sending message to {phone}\n{'='*60}")
+        
+        # 4. External Webhook Call (Make.com)
+        # We check the status code here to ensure the message actually queued
         response = requests.post(MAKE_WEBHOOK_URL, json=data, timeout=30)
-        print(f"✅ Reply to Clients webhook response: {response.status_code}")
         
-        # Log to backend database
-        print(f"\n💾 Logging to database...")
+        if response.status_code not in [200, 201, 202]:
+            print(f"❌ Make.com Webhook failed: {response.status_code}")
+            return jsonify({"error": "Failed to trigger WhatsApp webhook"}), 502
+
+        # 5. Database Logging
+        # REFACTORING NOTE: Avoid calling your own API via requests.post(f"{API_BASE}/log_message")
+        # Instead, import the logic from that route and call it as a function.
+        # Below is your current approach corrected for structure:
         log_data = {
             "phone": phone,
             "message": message,
@@ -285,18 +341,66 @@ def send_message():
             "notes": "",
             "handled_by": "Dashboard User"
         }
-        log_response = requests.post(f"{API_BASE}/log_message", json=log_data, timeout=30)
-        print(f"✅ Database log response: {log_response.status_code}")
         
+        # Using a timeout is good practice
+        log_response = requests.post(f"{API_BASE}/log_message", json=log_data, timeout=10)
+        
+        print(f"✅ Process Complete. Log Status: {log_response.status_code}")
         print(f"{'='*60}\n")
-        return jsonify({"success": True, "message": "Message sent successfully"})
         
+        return jsonify({"success": True, "message": "Message sent and logged successfully"})
+        
+    except requests.exceptions.Timeout:
+        return jsonify({"error": "Request timed out"}), 504
     except Exception as e:
         print(f"\n❌ Error in send_message: {str(e)}")
-        import traceback
         traceback.print_exc()
-        print(f"{'='*60}\n")
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": "An internal error occurred"}), 500
+    
+@app.route('/api/send_template', methods=['POST'])
+@login_required
+def send_template():
+    if not MAKE_WEBHOOK_URL:
+        return jsonify({"error": "Template webhook not configured"}), 500
+
+    data = request.get_json()
+    phone = data.get("phone")
+    variables = data.get("variables")
+    client_name = data.get("client_name", "Client")
+
+    if not phone or not variables:
+        return jsonify({"error": "Phone and variables required"}), 400
+
+    # 1️⃣ Trigger Make template webhook
+    r = requests.post(
+        MAKE_WEBHOOK_URL,
+        json={
+            "phone": phone,
+            "client_name": client_name,
+            "variables": variables
+        },
+        timeout=20
+    )
+
+    if not r.ok:
+        return jsonify({"error": "Template webhook failed"}), 502
+
+    # 2️⃣ LOG TEMPLATE MESSAGE TO BACKEND (CRITICAL)
+    try:
+        requests.post(
+            f"{API_BASE}/api/log_template_message",
+            json={
+                "phone": phone,
+                "client_name": client_name,
+                "message": variables,
+            },
+            timeout=10
+        )
+    except Exception as e:
+        print("⚠️ Template logged failed:", e)
+
+    return jsonify({"success": True})
+
     
 @app.route("/api/contacts/<phone>", methods=["PATCH"])
 def update_contact_proxy(phone):
